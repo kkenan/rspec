@@ -178,8 +178,8 @@ private
     end
 
     def establish_db_connection
-      GLOBAL_FILE_LOCK = '/tmp/rspec2db.lock'
-      WAIT_FOR_UNLOCK_TIMEOUT = 2
+      global_file_lock = '/tmp/rspec2db.lock'
+      wait_for_unlock_timeout = 2
       ActiveRecord::Base.establish_connection(@config["dbconnection"])
 
       # Find or create test suite
@@ -193,10 +193,10 @@ private
       }
 
       # Find or create test run
-      @global_lock = File.new(GLOBAL_FILE_LOCK, File::CREAT | File::TRUNC)
+      @global_lock = File.new(global_file_lock, File::CREAT | File::TRUNC)
 
       begin
-        Timeout.timeout(WAIT_FOR_UNLOCK_TIMEOUT) { @global_lock.flock(File::LOCK_EX) }
+        Timeout.timeout(wait_for_unlock_timeout) { @global_lock.flock(File::LOCK_EX) }
         @testrun = TestRun.where(test_run_hash).first || TestRun.create(test_run_hash)
       rescue Exception => e
         puts e.message
