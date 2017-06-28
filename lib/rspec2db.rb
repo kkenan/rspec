@@ -1,5 +1,6 @@
 require 'rspec/core/formatters/base_text_formatter'
 require 'active_record'
+require 'timeout'
 require 'yaml'
 
 class TestCase < ActiveRecord::Base
@@ -177,6 +178,8 @@ private
     end
 
     def establish_db_connection
+      GLOBAL_FILE_LOCK = '/tmp/rspec2db.lock'
+      WAIT_FOR_UNLOCK_TIMEOUT = 2
       ActiveRecord::Base.establish_connection(@config["dbconnection"])
 
       # Find or create test suite
@@ -190,6 +193,16 @@ private
       }
 
       # Find or create test run
-      @testrun = TestRun.where(test_run_hash).first || TestRun.create(test_run_hash)
+      @global_lock = File.new(GLOBAL_FILE_LOCK, File::CREAT | File::TRUNC)
+
+      begin
+        Timeout.timeout(WAIT_FOR_UNLOCK_TIMEOUT) { @global_lock.flock(File::LOCK_EX) }
+        @testrun = TestRun.where(test_run_hash).first || TestRun.create(test_run_hash)
+      rescue Exception => e
+        puts e.message
+        puts e.backtrace
+      ensure
+        @global_lock.flock(File::LOCK_UN)
+      end
     end
 end
