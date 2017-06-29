@@ -129,16 +129,11 @@ class Rspec2db < RSpec::Core::Formatters::BaseTextFormatter
       @global_lock = File.new(@global_file_lock, File::CREAT | File::TRUNC)
       begin
         @global_lock.flock(File::LOCK_EX)
-        #@testrun.increment(:example_count, notification.example_count)
-        #       .increment(:failure_count, notification.failure_count)
-        #       .increment(:pending_count, notification.pending_count)
-        #       .increment(:duration, notification.duration)
-        #       .save!
-        @testrun.update_attributes(
-          :duration=>notification.duration,
-          :example_count=>notification.example_count,
-          :failure_count=>notification.failure_count,
-          :pending_count=>notification.pending_count)
+        @testrun.increment(:example_count, notification.example_count)
+               .increment(:failure_count, notification.failure_count)
+               .increment(:pending_count, notification.pending_count)
+               .increment(:duration, notification.duration)
+               .save!
         @global_lock.flock(File::LOCK_UN)
       rescue Exception => e
         puts e.message
